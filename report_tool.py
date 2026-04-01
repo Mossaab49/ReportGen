@@ -63,6 +63,7 @@ FONT_SIZE_BODY    = 20             # paragraphes
 FONT_SIZE_CAPTION = 15             # légendes figures
 FONT_SIZE_COVER   = 53             # titre couverture
 FONT_SIZE_REPORT  = 80             # mot REPORT
+FONT_SIZE_SUBTITLE = 24             # sous-titres (ex: nom des étapes)
 
 
 # =============================================================
@@ -135,6 +136,7 @@ def load_templates():
             tpl["_accent"]    = RGBColor(*tpl["accent_color"])
             tpl["_secondary"] = RGBColor(*tpl["secondary_color"])
             tpl["_dark"]      = RGBColor(*tpl["text_dark"])
+            tpl["_subtitle"]  = RGBColor(*tpl["subtitle_color"]) if tpl.get("subtitle_color") is not None else "#ff914d"
             valid.append(tpl)
         else:
             warn("Template '" + tpl["id"] + "' : fichiers images manquants, ignore.")
@@ -457,9 +459,22 @@ def _new_content_section(doc, tpl):
     add_watermark_to_section(doc, sec, tpl["_page"])
     return sec
 
+def _write_subtitle(doc, tpl, text):
+    """Ecrit un sous-titre (ex: nom d'une etape) dans le doc."""
+    p_sub = doc.add_paragraph()
+    p_sub.paragraph_format.space_before = Pt(6)
+    p_sub.paragraph_format.space_after  = Pt(2)
+    rs = p_sub.add_run(text)
+    rs.font.size      = Pt(tpl.get("subtitle_font_size", FONT_SIZE_SUBTITLE))
+    rs.font.bold      = True
+    rs.font.underline   = True
+    rs.font.color.rgb = tpl["_subtitle"]
+    rs.font.name      = FONT_NAME
 
-def _write_bloc(doc, tpl, paragraph, images, fig_base, fig_counter):
-    """Ecrit un bloc (paragraphe + images) dans le doc. Retourne fig_counter mis a jour."""
+def _write_bloc(doc, tpl, subtitle, paragraph, images, fig_base, fig_counter):
+    """Ecrit un bloc (subtitle + paragraphe + images) dans le doc. Retourne fig_counter mis a jour."""
+    if subtitle:
+        _write_subtitle(doc, tpl, subtitle)
     if paragraph:
         p_body = doc.add_paragraph(str(paragraph))
         p_body.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
@@ -495,7 +510,7 @@ def build_content_page(doc, tpl, heading, pages_data):
     """
     Construit une ou plusieurs pages pour une section.
     pages_data : liste de pages.
-    Chaque page = liste de blocs = {"paragraph": str, "images": [Path, ...]}.
+    Chaque page = liste de blocs = {"subtitle": str, "paragraph": str, "images": [Path, ...]}.
     Premiere page : titre + separateur + blocs.
     Pages suivantes : titre (suite) + blocs.
     """
@@ -517,6 +532,7 @@ def build_content_page(doc, tpl, heading, pages_data):
         for bloc in blocs:
             fig_counter = _write_bloc(
                 doc, tpl,
+                bloc.get("subtitle", ""),
                 bloc.get("paragraph", ""),
                 bloc.get("images", []),
                 heading, fig_counter
@@ -548,6 +564,7 @@ def build_outro_page(doc, tpl, heading, pages_data):
         for bloc in blocs:
             fig_counter = _write_bloc(
                 doc, tpl,
+                bloc.get("subtitle", ""),
                 bloc.get("paragraph", ""),
                 bloc.get("images", []),
                 heading, fig_counter
@@ -632,6 +649,14 @@ def collect_bloc(bloc_num, step_name, report_title, page_num):
     print()
     print("    --- Bloc " + str(bloc_num) + " ---")
 
+    # sous-titre du bloc (optionnel)
+    sub = "" 
+    if ask_yesno("Ajouter un sous-titre pour ce bloc ?", default=False):
+        sub = ask("Texte du sous-titre")
+        if sub:
+            print("    Sous-titre : " + sub)
+            step_name = sub  # pour le prompt IA du paragraphe
+
     # Images du bloc
     images = []
     if ask_yesno("Ajouter une image pour ce bloc ?", default=False):
@@ -651,7 +676,7 @@ def collect_bloc(bloc_num, step_name, report_title, page_num):
     if not ask_yesno("Conserver ce paragraphe ?", default=True):
         paragraph = collect_manual("votre paragraphe")
 
-    return {"paragraph": paragraph, "images": images}
+    return {"subtitle": sub, "paragraph": paragraph, "images": images}
 
 
 def collect_page_blocs(step_name, report_title, page_num):

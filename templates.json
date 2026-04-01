@@ -9,6 +9,7 @@
       "accent_color":    [52, 78, 46],
       "secondary_color": [138, 160, 116],
       "text_dark":       [30, 30, 30],
+      "subtitle_color":  [255, 145, 77],
       "title_font_size": 50,
       "body_font_size":  16,
       "cover_title_x_cm": 1.8,
