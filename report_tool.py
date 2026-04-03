@@ -26,6 +26,8 @@ import urllib.request, urllib.error
 from pathlib import Path
 from datetime import datetime
 
+import requests
+
 # ── dependances ───────────────────────────────────────────────
 def check_deps():
     missing = []
@@ -51,10 +53,40 @@ TEMPLATES_DIR  = SCRIPT_DIR / "templates"
 TEMPLATES_JSON = SCRIPT_DIR / "templates.json"
 OUTPUT_DIR     = SCRIPT_DIR / "rapports_generes"
 
-# ── API Claude ────────────────────────────────────────────────
-API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-API_URL = "https://api.anthropic.com/v1/messages"
-MODEL   = "claude-opus-4-5"
+# ── API GROQ ────────────────────────────────────────────────
+
+def parse_ini_file(path):
+    """
+    Parsage minimaliste d'un fichier INI (clé=valeur, section non prise en charge).
+    Retourne un dictionnaire.
+    """
+    result = {}
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith(";") or line.startswith("#"):
+                continue
+            if "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            result[key.strip()] = value.strip().strip('"').strip("'")
+    return result
+
+def load_api_key():
+    # 1. Chercher dans l'environnement
+    key = os.environ.get("GROQ_API_KEY", "")
+    if key:
+        return key
+    # 2. Sinon chercher dans .env
+    env_file = SCRIPT_DIR / ".env"
+    if env_file.exists():
+        data = parse_ini_file(str(env_file))
+        return data.get("GROQ_API_KEY", "")
+    return ""
+
+API_KEY = load_api_key()
+API_URL = "https://api.groq.com/openai/v1/chat/completions"
+MODEL   = "llama-3.3-70b-versatile"
 
 # ── CONFIGURATION TYPOGRAPHIE ─────────────────────────────
 FONT_NAME         = "Montserrat"   # police globale
@@ -74,7 +106,7 @@ def banner():
     print()
     print("=" * 58)
     print("|" + " GENERATEUR DE RAPPORT INTERACTIF ".center(56) + "|")
-    print("|" + " Templates personnalises + Claude AI ".center(56) + "|")
+    print("|" + " Templates personnalises + GROQ AI ".center(56) + "|")
     print("|" + "~ " * 28                                          + "|")
     print("|" + " Developed by  Nigo Namikaze ".center(56) + "|")
     print("=" * 58); print()    
@@ -159,37 +191,35 @@ def choose_template(templates):
 
 
 # =============================================================
-#  API CLAUDE
+#  API GROQ
 # =============================================================
 
 def call_claude(prompt, max_tokens=500):
     """Appel API Anthropic. Retourne uniquement le texte."""
     if not API_KEY:
-        return "[Paragraphe IA indisponible : definissez ANTHROPIC_API_KEY]"
-    body = json.dumps({
-        "model": MODEL,
-        "max_tokens": max_tokens,
-        "messages": [{"role": "user", "content": prompt}]
-    }).encode("utf-8")
-    req = urllib.request.Request(
-        API_URL, data=body, method="POST",
-        headers={
-            "Content-Type":      "application/json",
-            "x-api-key":         API_KEY,
-            "anthropic-version": "2023-06-01",
-        }
-    )
+        return "[IA indisponible : definissez GROQ_API_KEY]"
     try:
-        with urllib.request.urlopen(req, timeout=60) as r:
-            res = json.loads(r.read().decode("utf-8"))
-            # Extraire le texte du premier bloc de type "text"
-            for block in res.get("content", []):
-                if isinstance(block, dict) and block.get("type") == "text":
-                    return block["text"].strip()
-            return "[Reponse IA vide]"
-    except urllib.error.HTTPError as e:
-        err = e.read().decode("utf-8", errors="replace")
-        return "[Erreur API " + str(e.code) + ": " + err[:120] + "]"
+        response = requests.post(
+            API_URL,
+            headers={
+                "Content-Type":  "application/json",
+                "Authorization": "Bearer " + API_KEY,
+            },
+            json={
+                "model":      MODEL,
+                "max_tokens": max_tokens,
+                "messages":   [{"role": "user", "content": prompt}]
+            },
+            timeout=60
+        )
+        
+        res = response.json()
+
+        # Erreur API
+        if response.status_code != 200:
+            return "[Erreur API " + str(response.status_code) + ": " + str(res) + "]"
+
+        return res["choices"][0]["message"]["content"].strip()
     except Exception as e:
         return "[Erreur reseau: " + str(e) + "]"
 
