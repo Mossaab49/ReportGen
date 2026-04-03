@@ -23,11 +23,11 @@
       "outro_left_margin_cm": 2.5
     },
     {
-      "id": "tem1",
-      "name": "Template 1 ",
-      "intro_bg": "tem1_intro.png",
-      "outro_bg": "tem1_outro.png",
-      "page_bg":  "tem1_page.png",
+      "id": "tem2",
+      "name": "Template 2 ",
+      "intro_bg": "tem2_intro.png",
+      "outro_bg": "tem2_outro.png",
+      "page_bg":  "tem2_page.png",
       "accent_color":    [26, 50, 72],
       "secondary_color": [42, 75, 105],
       "text_dark":       [30, 30, 30],
@@ -45,11 +45,11 @@
       "outro_left_margin_cm": 3
     },
     {
-      "id": "tem2",
-      "name": "Template 2 ",
-      "intro_bg": "tem2_intro.png",
-      "outro_bg": "tem2_outro.png",
-      "page_bg":  "tem2_page.png",
+      "id": "tem3",
+      "name": "Template 3 ",
+      "intro_bg": "tem3_intro.png",
+      "outro_bg": "tem3_outro.png",
+      "page_bg":  "tem3_page.png",
       "accent_color":    [251, 84, 84],
       "secondary_color": [57, 96, 121],
       "text_dark":       [30, 30, 30],

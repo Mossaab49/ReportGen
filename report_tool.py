@@ -75,7 +75,9 @@ def banner():
     print("=" * 58)
     print("|" + " GENERATEUR DE RAPPORT INTERACTIF ".center(56) + "|")
     print("|" + " Templates personnalises + Claude AI ".center(56) + "|")
-    print("=" * 58); print()
+    print("|" + "~ " * 28                                          + "|")
+    print("|" + " Developed by  Nigo Namikaze ".center(56) + "|")
+    print("=" * 58); print()    
 
 def section_title(t):
     print(); print("-" * 58)
