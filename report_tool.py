@@ -388,7 +388,8 @@ def build_cover_pages(doc, tpl, title, author, supervisor, date_str):
     add_watermark_to_section(doc, sec2, tpl["_intro"])
 
     # Espace pour pousser le texte vers le bas (zone sans cercles)
-    for _ in range(22):
+    cover_lines = tpl.get("cover_blank_lines", 22)
+    for _ in range(cover_lines):
         p = doc.add_paragraph("")
         p.paragraph_format.space_before = Pt(0)
         p.paragraph_format.space_after  = Pt(0)
@@ -454,7 +455,8 @@ def _new_content_section(doc, tpl):
     sec = doc.add_section(WD_SECTION.NEW_PAGE)
     sec.page_width    = Inches(8.27)
     sec.page_height   = Inches(11.69)
-    set_margins(sec, top_cm=2.5, bot_cm=2.0, left_cm=2.5, right_cm=2.0)
+    left_cm = tpl.get("page_left_margin_cm", 2.5)
+    set_margins(sec, top_cm=2.5, bot_cm=2.0, left_cm=left_cm, right_cm=2.0)
     sec.header_distance = Emu(0)
     add_watermark_to_section(doc, sec, tpl["_page"])
     return sec
@@ -547,7 +549,8 @@ def build_outro_page(doc, tpl, heading, pages_data):
         sec = doc.add_section(WD_SECTION.NEW_PAGE)
         sec.page_width    = Inches(8.27)
         sec.page_height   = Inches(11.69)
-        set_margins(sec, top_cm=2.5, bot_cm=2.0, left_cm=2.5, right_cm=2.0)
+        left_cm = tpl.get("outro_left_margin_cm", 2.5)
+        set_margins(sec, top_cm=2.5, bot_cm=2.0, left_cm=left_cm, right_cm=2.0)
         sec.header_distance = Emu(0)
         add_watermark_to_section(doc, sec, tpl["_outro"])
         p_h = doc.add_paragraph()
